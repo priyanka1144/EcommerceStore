@@ -5,7 +5,7 @@
 ## Features
 - Product listing with search and category filter
 - Product details page with stock status
-- Shopping cart (quantity change, remove, free delivery over $300)
+- Shopping cart (quantity change, remove, free delivery over ৳3,000)
 - Order processing (stock check + transaction, order history)
 - User registration and login (bcrypt + JWT)
 
