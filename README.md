@@ -5,7 +5,7 @@
 ## Features
 - Product listing with search and category filter
 - Product details page with stock status
-- Shopping cart (quantity change, remove, free delivery over ৳3,000)
+- Shopping cart (quantity change, remove, free delivery over $300)
 - Order processing (stock check + transaction, order history)
 - User registration and login (bcrypt + JWT)
 
@@ -31,4 +31,4 @@ Open http://localhost:3000
 | GET | /api/orders | yes | My orders |
 
 ## Screenshots
-Add your screenshots here.
+![EcommerceStore Screenshot](Pic-1.png)
