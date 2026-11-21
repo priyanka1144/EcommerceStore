@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>My orders | Hat.</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <header class="site-header" id="site-header"></header>
+  <main class="wrap">
+    <h1 style="margin-top:28px">My orders</h1>
+    <div id="list"></div>
+  </main>
+  <script src="/js/common.js"></script>
+  <script>
+    (async () => {
+      if (!store.token) { location.href = "/login.html?next=/orders.html"; return; }
+      const orders = await api("/api/orders");
+      $("#list").innerHTML = orders.length ? orders.map((o) => `
+        <div class="panel order">
+          <header><b>Order #${o.id}</b><span class="badge">${esc(o.status)}</span>
+            <span style="color:var(--muted)">${new Date(o.created_at + "Z").toLocaleString()}</span></header>
+          ${o.items.map((i) => `<div>${i.emoji} ${esc(i.name)} × ${i.qty} — ${money(i.price * i.qty)}</div>`).join("")}
+          <div class="summary-line total"><span>Total</span><span>${money(o.total)}</span></div>
+          <small style="color:var(--muted)">Deliver to: ${esc(o.address)} (${esc(o.phone)})</small>
+        </div>`).join("")
+        : `<div class="empty"><p>You haven't placed any orders yet.</p><a class="btn" href="/">Start shopping</a></div>`;
+    })();
+  </script>
+</body>
+</html>

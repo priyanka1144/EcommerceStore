@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Hat. | Online Store</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <header class="site-header" id="site-header"></header>
+  <main class="wrap">
+    <section class="hero">
+      <h1>Everyday things, delivered.</h1>
+      <p>Browse the shelf, add what you need, and check out in a minute.</p>
+    </section>
+    <div class="filters">
+      <input id="search" type="text" placeholder="Search products" aria-label="Search products">
+      <div id="chips" style="display:flex;gap:8px;flex-wrap:wrap"></div>
+    </div>
+    <div class="grid" id="grid"></div>
+  </main>
+  <script src="/js/common.js"></script>
+  <script>
+    let activeCat = "";
+    async function loadCats() {
+      const cats = await api("/api/categories");
+      $("#chips").innerHTML = ["All", ...cats].map((c) =>
+        `<button class="chip ${(c === "All" && !activeCat) || c === activeCat ? "active" : ""}" data-c="${c === "All" ? "" : esc(c)}">${esc(c)}</button>`).join("");
+      document.querySelectorAll(".chip").forEach((b) => b.onclick = () => { activeCat = b.dataset.c; loadCats(); loadProducts(); });
+    }
+    async function loadProducts() {
+      const q = encodeURIComponent($("#search").value.trim());
+      const list = await api(`/api/products?q=${q}&category=${encodeURIComponent(activeCat)}`);
+      $("#grid").innerHTML = list.length ? list.map((p) => `
+        <article class="product">
+          <a href="/product.html?id=${p.id}"><div class="thumb" style="background:${p.color}">${p.emoji}</div></a>
+          <div class="body">
+            <span class="cat">${esc(p.category)}</span>
+            <h3><a href="/product.html?id=${p.id}">${esc(p.name)}</a></h3>
+            <div class="actions">
+              <span class="price">${money(p.price)}</span>
+              <button class="btn" ${p.stock < 1 ? "disabled" : ""} onclick="addToCart(${p.id}, '${esc(p.name).replace(/'/g, "")}')">${p.stock < 1 ? "Sold out" : "Add to cart"}</button>
+            </div>
+          </div>
+        </article>`).join("") : `<p class="empty">No products match your search.</p>`;
+    }
+    function addToCart(id, name) { cart.add(id); toast(name + " added to cart"); }
+    let timer; $("#search").oninput = () => { clearTimeout(timer); timer = setTimeout(loadProducts, 250); };
+    loadCats(); loadProducts();
+  </script>
+</body>
+</html>

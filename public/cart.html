@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Cart | Hat.</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <header class="site-header" id="site-header"></header>
+  <main class="wrap">
+    <h1 style="margin-top:28px">Your cart</h1>
+    <div id="content"></div>
+  </main>
+  <script src="/js/common.js"></script>
+  <script>
+    let products = {};
+    async function load() {
+      const items = cart.items;
+      if (!items.length) {
+        $("#content").innerHTML = `<div class="empty"><p>Your cart is empty.</p><a class="btn" href="/">Browse products</a></div>`;
+        return;
+      }
+      const list = await api("/api/cart/details", "POST", { ids: items.map((i) => i.id) });
+      products = Object.fromEntries(list.map((p) => [p.id, p]));
+      render();
+    }
+    function render() {
+      const items = cart.items.filter((i) => products[i.id]);
+      if (!items.length) return load();
+      const subtotal = items.reduce((s, i) => s + products[i.id].price * i.qty, 0);
+      const delivery = subtotal >= 3000 ? 0 : 80;
+      $("#content").innerHTML = `
+        <div class="cart-layout">
+          <div class="panel">
+            ${items.map((i) => { const p = products[i.id]; return `
+              <div class="cart-row">
+                <div class="em" style="background:${p.color};border-radius:8px">${p.emoji}</div>
+                <div><a href="/product.html?id=${p.id}"><b>${esc(p.name)}</b></a><div style="color:var(--muted)">${money(p.price)} each</div></div>
+                <div class="qty"><button onclick="setQty(${p.id},${i.qty - 1})">−</button><span>${i.qty}</span><button onclick="setQty(${p.id},${Math.min(p.stock, i.qty + 1)})">+</button></div>
+                <div style="text-align:right"><b>${money(p.price * i.qty)}</b><br><button class="btn danger" style="padding:4px 10px;margin-top:4px" onclick="removeItem(${p.id})">Remove</button></div>
+              </div>`; }).join("")}
+          </div>
+          <div class="panel">
+            <h3 style="margin-top:0">Checkout</h3>
+            <div class="summary-line"><span>Subtotal</span><span>${money(subtotal)}</span></div>
+            <div class="summary-line"><span>Delivery ${delivery ? "" : "(free over ৳3,000)"}</span><span>${money(delivery)}</span></div>
+            <div class="summary-line total"><span>Total</span><span>${money(subtotal + delivery)}</span></div>
+            <label for="address">Delivery address</label>
+            <textarea id="address" rows="3" placeholder="House, road, area, city"></textarea>
+            <label for="phone">Phone number</label>
+            <input id="phone" type="tel" placeholder="01XXXXXXXXX">
+            <button class="btn" style="width:100%;margin-top:16px" onclick="placeOrder()">Place order</button>
+            <p class="msg" id="msg"></p>
+          </div>
+        </div>`;
+    }
+    function setQty(id, q) { cart.setQty(id, q); render(); }
+    function removeItem(id) { cart.remove(id); render(); }
+    async function placeOrder() {
+      const msg = $("#msg");
+      if (!store.token) { location.href = "/login.html?next=/cart.html"; return; }
+      try {
+        const res = await api("/api/orders", "POST", {
+          items: cart.items, address: $("#address").value, phone: $("#phone").value,
+        });
+        cart.clear();
+        $("#content").innerHTML = `<div class="empty"><h2>Order #${res.orderId} placed</h2>
+          <p>Total ${money(res.total)}. We'll deliver it soon.</p><a class="btn" href="/orders.html">View my orders</a></div>`;
+      } catch (e) { msg.className = "msg error"; msg.textContent = e.message; }
+    }
+    load();
+  </script>
+</body>
+</html>

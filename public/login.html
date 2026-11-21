@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Log in | Hat.</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <header class="site-header" id="site-header"></header>
+  <main class="wrap">
+    <div class="panel form-card">
+      <div class="tabs">
+        <button class="chip active" id="tab-login">Log in</button>
+        <button class="chip" id="tab-register">Create account</button>
+      </div>
+      <div id="name-wrap" hidden><label for="name">Full name</label><input id="name" type="text" autocomplete="name"></div>
+      <label for="email">Email</label><input id="email" type="email" autocomplete="email">
+      <label for="password">Password</label><input id="password" type="password" autocomplete="current-password">
+      <button class="btn" id="submit" style="width:100%;margin-top:18px">Log in</button>
+      <p class="msg" id="msg"></p>
+    </div>
+  </main>
+  <script src="/js/common.js"></script>
+  <script>
+    let mode = "login";
+    function setMode(m) {
+      mode = m;
+      $("#tab-login").classList.toggle("active", m === "login");
+      $("#tab-register").classList.toggle("active", m === "register");
+      $("#name-wrap").hidden = m === "login";
+      $("#submit").textContent = m === "login" ? "Log in" : "Create account";
+    }
+    $("#tab-login").onclick = () => setMode("login");
+    $("#tab-register").onclick = () => setMode("register");
+    $("#submit").onclick = async () => {
+      const msg = $("#msg");
+      try {
+        const data = await api("/api/" + mode, "POST", {
+          name: $("#name").value, email: $("#email").value, password: $("#password").value,
+        });
+        store.login(data);
+        const next = new URLSearchParams(location.search).get("next");
+        location.href = next && next.startsWith("/") ? next : "/";
+      } catch (e) { msg.className = "msg error"; msg.textContent = e.message; }
+    };
+  </script>
+</body>
+</html>

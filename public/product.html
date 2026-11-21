@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Product | Hat.</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <header class="site-header" id="site-header"></header>
+  <main class="wrap"><div id="detail"></div></main>
+  <script src="/js/common.js"></script>
+  <script>
+    let qty = 1, product;
+    async function load() {
+      const id = new URLSearchParams(location.search).get("id");
+      try { product = await api("/api/products/" + id); }
+      catch (e) { $("#detail").innerHTML = `<p class="empty">${esc(e.message)} <a href="/">Back to shop</a></p>`; return; }
+      document.title = product.name + " | Hat.";
+      render();
+    }
+    function render() {
+      const p = product, low = p.stock > 0 && p.stock <= 5;
+      $("#detail").innerHTML = `
+        <div class="detail">
+          <div class="big" style="background:${p.color}">${p.emoji}</div>
+          <div>
+            <p class="cat" style="color:var(--muted)">${esc(p.category)}</p>
+            <h1>${esc(p.name)}</h1>
+            <p class="price" style="font-size:1.6rem">${money(p.price)}</p>
+            <p>${esc(p.description)}</p>
+            <p class="${low || p.stock < 1 ? "stock-low" : "stock-ok"}">${p.stock < 1 ? "Out of stock" : low ? `Only ${p.stock} left` : `In stock (${p.stock})`}</p>
+            <div style="display:flex;gap:12px;align-items:center;margin-top:16px">
+              <div class="qty"><button onclick="change(-1)" aria-label="Decrease">−</button><span>${qty}</span><button onclick="change(1)" aria-label="Increase">+</button></div>
+              <button class="btn" ${p.stock < 1 ? "disabled" : ""} onclick="add()">Add to cart</button>
+              <a class="btn secondary" href="/">Keep shopping</a>
+            </div>
+          </div>
+        </div>`;
+    }
+    function change(d) { qty = Math.min(product.stock, Math.max(1, qty + d)); render(); }
+    function add() { cart.add(product.id, qty); toast(`${qty} × ${product.name} added to cart`); }
+    load();
+  </script>
+</body>
+</html>
